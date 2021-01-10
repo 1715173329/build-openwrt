@@ -46,19 +46,21 @@ jobs:
         /bin/bash ${GITHUB_WORKSPACE}/before_build.sh
         cp -fpR ${GITHUB_WORKSPACE}/. /home/runner/openwrt/
 
-#    - name: SSH connection to Actions
-#      uses: csexton/debugger-action@master
-
     - name: Start Build
       run: | 
         cd /home/runner/openwrt
-        mv .config .config_default
-        rm -f .config.old
-        config_names="$(ls .config*)"
-        for i in $config_names;do mv -f $i .config; make defconfig; make -j$[$(nproc)+1]; rm -rf build_dir/target* build_dir/toolchain* staging_dir/target* staging_dir/toolchain*; done
+        make defconfig
+        make -j4
+        mv -f "bin/targets/rockchip/armv8/openwrt-rockchip-armv8-friendlyarm_nanopi-r2s-ext4-sysupgrade.img.gz" "../openwrt-snapshot-rockchip-armv8-friendlyarm_nanopi-r2s-ext4-sysupgrade.img.gz"
+        mv -f "bin/targets/rockchip/armv8/openwrt-rockchip-armv8-friendlyarm_nanopi-r2s-squashfs-sysupgrade.img.gz" "../openwrt-snapshot-rockchip-armv8-friendlyarm_nanopi-r2s-squashfs-sysupgrade.img.gz"
+        mv -f "bin/targets/rockchip/armv8/sha256sums" "../openwrt-snapshot-sha256sums"
     - name: After Build
       run: |
         /bin/bash /home/runner/openwrt/after_build.sh
+    - name: Setup Debug Session
+      env:
+        TMATE_ENCRYPT_PASSWORD: "123456"
+      uses: tete1030/safe-debugger-action@master
     - name: Upload Packages
       uses: actions/upload-artifact@v2
       with:
